@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { Product, Category, Tag, ProductTag } = require('../../models');
+const { destroy } = require('../../models/Product');
 
 // The `/api/products` endpoint
 
@@ -9,25 +10,47 @@ router.get('/', async (req, res) => {
   // be sure to include its associated Category and Tag data
   try {
     const productData = await Product.findAll({
-      include: [Category, Tag]});
+      include: [{model: Category}, {model: Tag, attributes: ['tag_name'], through: ProductTag, as: 'productTag_tagProduct'}]
+    });
+
+    if (!productData) {
+      res.status(404).json({message: 'no product data aka nothing in the table buddy ol pal'})
+    }
+
       res.status(200).json(productData);
   } catch (err) {
     res.status(500).json(err);
   }
 
-/*   Product.findAll({
-    include: [Category, Tag]
-  }).then(products => res.json(products)) */
+
 });
 
 // get one product
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   // find a single product by its `id`
   // be sure to include its associated Category and Tag data
+
+  try {
+    const productData = await Product.findByPk(req.param.id, {
+      include: [{
+        model: Category, Tag
+      }]
+    })
+
+    if (!productData) {
+      res.status(404).json({ message: 'No location found with this id'});
+      return;
+    }
+
+    res.status(200).json(productData)
+  } catch (err) {
+    res.status(500).json(err);
+  }
+
 });
 
 // create new product
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   /* req.body should look like this...
     {
       product_name: "Basketball",
@@ -36,6 +59,8 @@ router.post('/', (req, res) => {
       tagIds: [1, 2, 3, 4]
     }
   */
+
+    
   Product.create(req.body)
     .then((product) => {
       // if there's product tags, we need to create pairings to bulk create in the ProductTag model
@@ -60,6 +85,8 @@ router.post('/', (req, res) => {
 
 // update product
 router.put('/:id', (req, res) => {
+
+
   // update product data
   Product.update(req.body, {
     where: {
@@ -103,8 +130,29 @@ router.put('/:id', (req, res) => {
     });
 });
 
-router.delete('/:id', (req, res) => {
-  // delete one product by its `id` value
+router.delete('/:id', async (req, res) => {
+  //lets try to delete
+  try {
+    //lets delete a product
+    const productData = await Product.destroy({
+      //this specifies the product we are going to delete
+      where: {
+        id: req.params.id
+      }
+    });
+    //if the product does not exist
+    if (!productData) {
+      //give the user a 404 error code
+      res.status(404).json({message: 'this product id does not exist my dood'})
+    }
+    //if it does work, we are golden
+    res.status(200).json(productData)
+
+    //if there are other problems
+  } catch {
+    //give the user a 500 error code
+    res.status(500).json(err)
+  }
 });
 
 module.exports = router;
