@@ -31,6 +31,9 @@
 <a id="quest"></a>
 ## Questions 
 
+Here is the walktrhough video 
+https://ooo.mmhmm.app/z_y8lZNv0pa58SZ0dkEvYU
+
 [harristheharris.com](https://github.com/harristheharris) 
 
 email: anthonyharris7777@gmail.com
